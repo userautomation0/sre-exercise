@@ -1,0 +1,52 @@
+name: 'Terraform'
+
+on:
+  workflow_call:
+    inputs:
+      repo-path:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory:  ${{ github.workspace }}/${{ inputs.repo-path }}
+        shell: bash
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ vars.AWS_REGION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    # Install specified version of Terraform CLI 
+    - name: Setup Terraform/home/runner/work/
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.7.0"       
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Format
+      run: terraform fmt -check
+
+    - name: Terraform Plan
+      run: terraform plan -var-file default.tfvars
+
+    # Auto apply on merge to main
+    - name: Terraform Apply
+      if: github.event.pull_request.merged == true
+      run: terraform apply -auto-approve -var-file default.tfvars

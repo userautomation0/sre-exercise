@@ -1,28 +1,27 @@
-## Overview
-This exercise demonstrates the use of CI/CD tooling.
+# Exercise-spa
 
-As the task is open-ended, it leaves you with quite a few decisions to make.
+## Workflow
+- Simple workflow which runs on update to any branch
+- Deployment/Apply steps are not performed until a PR has been successfully merged.
+- (More complicated branching strategy could be incorporated as required, ie only perform work flow if branch regex is met)
+- Testing steps would be added into the workflow and be performed prior to any deployments
+- Changes in the subdirectories are used to determine what workflows, jobs and steps are run
 
-The end result and the way to get there can be very simple or it can be very complex, depending on how you approach it.
+## Github 
+Depends on AWS access key and secret being added into repository as secrets, OIDC and roles would have been better 
 
-Please note, the choice of application/service is not as important as the choice of tooling and automation itself.
+## For the terraform repositories :-
+Default.tfvars where present should be changed to match the target environment
 
-Enjoy!
+### Bootstrap :-
+Should be run first to create the required terraform state backends
+State/backend files must be changed to match the bucket created by bootstrap
 
-## Goal
-Design and implement a CI/CD pipeline that builds, tests and deploys either a single-page web application or REST API.
+### Backend :-
+Provides an ECS cluster and service which is accessible behind an internal load balancer
 
-## Criteria
-* Pipeline should be described in a file (e.g. `.gitlab-ci.yml` in GitLab)
-* Any required infrastructure should be defined as code using either Terraform or CloudFormation
-* Provide web application/API endpoint URL
-* Provide source code of the solution so we can easily reproduce it in our environment
+### Frontend :-
+Cloudfront distribution with an S3 origin serving a simple html page
 
-## Optional
-* Provide documentation and diagram for the proposed solution
-* Write a simple app/service of your own
-
-## Technologies
-* Use free version of CI/CD tools (e.g. GitLab, CircleCI, Travis CI etc.)
-* Use any open source application/service written in any language
-* Use AWS Free Tier if cloud resources are required
+### Pages :-
+Extremely simple html document to be uploaded and served from S3
