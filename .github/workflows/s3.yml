@@ -1,0 +1,48 @@
+name: Deploy to S3 and Cloudfront
+
+on:
+  workflow_call:
+    inputs:
+      repo-path:
+        required: true
+        type: string
+      s3-bucket:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  update-s3:
+    name: Build
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory:  ${{ github.workspace }}/${{ inputs.repo-path }}
+        shell: bash
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Copy Files to S3
+      id: copy-s3
+      run:  |
+        aws s3 sync . s3://${{ inputs.s3-bucket }}
+
+    - name: Invalidate Cache
+      if: github.event.pull_request.merged == true    
+      id: invalidate-cache
+      run:  |
+         echo "Gotcha must specify the origin its been fixed as myS3Origin for now "
+         DISTRIBUTION=$(aws cloudfront list-distributions --query "DistributionList.Items[*].{id:Id,origin:Origins.Items[0].Id}[?origin=='myS3Origin'].id" --output text)
+         aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION} --paths  /*

@@ -1,0 +1,84 @@
+name: 'Controller'
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    types:  [ "closed" ]
+
+permissions:
+  actions: write
+  checks: write 
+  pull-requests: write
+  contents: read
+  packages: write
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      bootstrap: ${{ steps.filter.outputs.bootstrap }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}      
+      docker: ${{ steps.filter.outputs.docker }}
+      pages: ${{ steps.filter.outputs.pages }}             
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Check for changes
+      uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          bootstrap:
+            - 'bootstrap/**'
+          frontend:
+            - 'frontend/**'
+          backend:
+            - 'backend/**'       
+          docker:
+            - 'docker/**'
+          pages:
+            - 'pages/**'                                 
+  bootstrap: 
+    needs: changes
+    if: ${{ needs.changes.outputs.bootstrap == 'true' }}
+    uses: ./.github/workflows/terraform.yml
+    with:
+      repo-path: bootstrap
+    secrets: inherit  
+
+  frontend: 
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    uses: ./.github/workflows/terraform.yml
+    with:
+      repo-path: frontend
+    secrets: inherit  
+
+  backend: 
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    uses: ./.github/workflows/terraform.yml
+    with:
+      repo-path: backend
+    secrets: inherit  
+
+  docker: 
+    needs: changes
+    if: ${{ needs.changes.outputs.docker == 'true' }}
+    uses: ./.github/workflows/ecr.yml
+    with:
+      repo-path: docker
+      ecr-repository: exercise-tmc.co.uk/excercise
+    secrets: inherit 
+
+  pages: 
+    needs: changes
+    if: ${{ needs.changes.outputs.pages == 'true' }}
+    uses: ./.github/workflows/s3.yml
+    with:
+      repo-path: pages
+      s3-bucket: exercise-spa
+    secrets: inherit      

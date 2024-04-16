@@ -1,0 +1,13 @@
+# Terraform files
+.terraform
+terraform.tfstate
+terraform.tfvars
+*.tfstate*
+**/.terraform.lock.hcl
+.terraspace-cache
+
+# OS X files
+.history
+.DS_Store
+
+**/node_module*
